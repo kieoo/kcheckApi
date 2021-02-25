@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"io"
 	"kcheckApi/kcheck"
 	"net/http"
+	"os"
 	"regexp"
 )
 
@@ -13,7 +15,10 @@ type Pb struct {
 }
 
 func main() {
-	r := gin.Default()
+	logfile, _ := os.Create("gin.log")
+	gin.DefaultWriter = io.MultiWriter(logfile, os.Stdout)
+
+	r := gin.New()
 	r.Use(CorsMiddleware())
 	r.GET("version", func(c *gin.Context) {
 		c.String(http.StatusOK, "OK")
@@ -30,7 +35,9 @@ func main() {
 		}
 	})
 
-	r.POST("kcheck", kcheck.NormalCheck)
+	r.POST("/kcheck", kcheck.NormalCheck)
+
+	r.POST("/upload")
 
 	r.Run(":7002")
 }
@@ -39,7 +46,7 @@ func CorsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := c.Request.Method
 		origin := c.Request.Header.Get("Origin")
-		var filterHost = [...]string{"http://192.168.1.5:8080"}
+		var filterHost = [...]string{"10.192.176.36:8080"}
 		// filterHost 做过滤器，防止不合法的域名访问
 		var isAccess = false
 		for _, v := range filterHost {
