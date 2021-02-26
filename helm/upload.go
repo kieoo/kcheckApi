@@ -3,6 +3,7 @@ package helm
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -11,32 +12,33 @@ import (
 )
 
 type Upload struct {
-	ChartDir 	string
-	checkMark 	helmCheck
+	ChartDir  string
+	checkMark helmCheck
 }
 
 type helmCheck struct {
-	templates 	int
-	helpers 	int
-	values 		int
-	chart 		int
+	templates int
+	helpers   int
+	values    int
+	chart     int
 }
 
 func (u Upload) UloadInit() error {
-	u.ChartDir = fmt.Sprintf( "%d-%d", time.Now().Unix(), rand.Intn(1000))
+	u.ChartDir = fmt.Sprintf("%d-%d", time.Now().Unix(), rand.Intn(1000))
 	u.checkMark = helmCheck{0, 0, 0, 0}
-	if err := os.MkdirAll(u.ChartDir + "/templates", os.ModePerm); err != nil {
+	if err := os.MkdirAll(u.ChartDir+"/templates", os.ModePerm); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (u Upload) UploadSave( c *gin.Context) {
+func (u Upload) UploadSave(c *gin.Context) {
 	// 多文件上传
-	form, _:= c.MultipartForm()
+	form, _ := c.MultipartForm()
 	files := form.File["upload[]"]
 
+	// save Chart file
 	for _, file := range files {
 		fileName := strings.Split(file.Filename, ".")
 		switch fileName[0] {
@@ -44,27 +46,35 @@ func (u Upload) UploadSave( c *gin.Context) {
 			if err := c.SaveUploadedFile(file, u.ChartDir); err != nil {
 				c.String(http.StatusBadRequest, "decode values failure")
 			}
-			u.checkMark.values ++
+			u.checkMark.values++
 		case "Chart":
 			if err := c.SaveUploadedFile(file, u.ChartDir); err != nil {
 				c.String(http.StatusBadRequest, "decode Chart failure")
 			}
-			u.checkMark.chart ++
+			u.checkMark.chart++
 		case "_helpers":
-			if err := c.SaveUploadedFile(file, u.ChartDir + "/templates"); err != nil {
+			if err := c.SaveUploadedFile(file, u.ChartDir+"/templates"); err != nil {
 				c.String(http.StatusBadRequest, "decode Chart failure")
 			}
-			u.checkMark.helpers ++
+			u.checkMark.helpers++
 		default:
-			if err := c.SaveUploadedFile(file, u.ChartDir + "/templates"); err != nil {
+			if err := c.SaveUploadedFile(file, u.ChartDir+"/templates"); err != nil {
 				c.String(http.StatusBadRequest, "decode template yaml failure")
 			}
-			u.checkMark.templates ++
+			u.checkMark.templates++
 
 		}
 	}
 
-	if u.checkMark.values * u.checkMark.chart * u.checkMark.helpers * u.checkMark.templates < 0 {
-		c.
+	// check Chart file
+	if u.checkMark.values*u.checkMark.chart*u.checkMark.helpers*u.checkMark.templates < 0 {
+		log.Printf("values: %d, chart: %d, helpers : %d, templates: %d",
+			u.checkMark.values,
+			u.checkMark.chart,
+			u.checkMark.helpers,
+			u.checkMark.templates)
+
+		c.String(http.StatusBadRequest, "values/chart/helpers/template is require")
 	}
+
 }
