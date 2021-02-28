@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
+	"kcheckApi/helm"
 	"kcheckApi/kcheck"
 	"net/http"
 	"os"
@@ -37,16 +38,20 @@ func main() {
 
 	r.POST("/kcheck", kcheck.NormalCheck)
 
-	r.POST("/upload")
+	r.POST("/upload", helm.HelmChange)
 
-	r.Run(":7002")
+	r.POST("/return2", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"msg": "abc\ndfg"})
+	})
+
+	r.Run(":7001")
 }
 
 func CorsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := c.Request.Method
 		origin := c.Request.Header.Get("Origin")
-		var filterHost = [...]string{"10.192.176.36:8080"}
+		var filterHost = [...]string{origin}
 		// filterHost 做过滤器，防止不合法的域名访问
 		var isAccess = false
 		for _, v := range filterHost {

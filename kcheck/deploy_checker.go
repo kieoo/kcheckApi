@@ -33,9 +33,9 @@ type Checker interface {
 }
 
 type checkBody struct {
-	OriYaml    string `json:"ori_yaml"`
-	RuleConfig string `json:"rule_config"`
-	RuleName   string `json:"rule_name"`
+	OriYaml    string `json:"ori_yaml" form:"ori_yaml" binding:"required"`
+	RuleConfig string `json:"rule_config" form:"rule_config" binding:"required"`
+	RuleName   string `json:"rule_name" form:"rule_name" binding:"required"`
 }
 
 // Rule is composed of a set of checkers
@@ -66,7 +66,8 @@ func NormalCheck(c *gin.Context) {
 	p := checkBody{}
 	if err := c.BindJSON(&p); err != nil {
 		fmt.Println(err.Error())
-		c.String(http.StatusBadRequest, "checkBody error")
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "checkBody error"})
+		return
 	}
 
 	srcYaml := p.OriYaml
@@ -79,8 +80,9 @@ func NormalCheck(c *gin.Context) {
 	ruleSet, _, err := ParserRuleSetConfig("conf/" + ruleConfig)
 
 	if err != nil {
-		c.String(http.StatusBadRequest,
-			"Failed to load the file '%s'.", ruleConfig)
+		c.JSON(http.StatusBadRequest,
+			gin.H{"msg": fmt.Sprintf("Failed to load the file '%s'.", ruleConfig)})
+		return
 	}
 
 	var rule *Rule
@@ -91,8 +93,9 @@ func NormalCheck(c *gin.Context) {
 	}
 
 	if rule == nil {
-		c.String(http.StatusBadRequest,
-			"Could not find the checking rule '%s'.", ruleName)
+		c.JSON(http.StatusBadRequest,
+			gin.H{"msg": fmt.Sprintf("Could not find the checking rule '%s'.", ruleName)})
+		return
 	}
 
 	var resultMap []HintsMap
@@ -100,8 +103,8 @@ func NormalCheck(c *gin.Context) {
 	for _, check := range rule.Checkers {
 		hintMap, err := check.Check([]byte(srcYaml))
 		if err != nil {
-			c.String(http.StatusBadRequest,
-				"Checking error")
+			c.JSON(http.StatusBadRequest, gin.H{"msg": "Checking error"})
+			return
 		}
 		if len(hintMap.Hints) > 0 {
 			resultMap = append(resultMap, hintMap)
@@ -111,7 +114,8 @@ func NormalCheck(c *gin.Context) {
 	// jsonResultMap, err := json.Marshal(resultMap)
 
 	if err != nil {
-		c.String(http.StatusBadRequest, "Checking error")
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Checking error"})
+		return
 	}
 	// 想要struct的字段能被marshal, 首字母必须大写+++
 	c.JSON(http.StatusOK, resultMap)

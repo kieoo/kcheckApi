@@ -5,14 +5,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"strings"
 	"time"
 )
 
 type Upload struct {
-	ChartDir  string
+	ChartDir  string `json:"chartDir"`
 	checkMark helmCheck
 }
 
@@ -23,7 +22,7 @@ type helmCheck struct {
 	chart     int
 }
 
-func (u Upload) UloadInit() error {
+func (u *Upload) UploadInit() error {
 	u.ChartDir = fmt.Sprintf("%d-%d", time.Now().Unix(), rand.Intn(1000))
 	u.checkMark = helmCheck{0, 0, 0, 0}
 	if err := os.MkdirAll(u.ChartDir+"/templates", os.ModePerm); err != nil {
@@ -33,33 +32,46 @@ func (u Upload) UloadInit() error {
 	return nil
 }
 
-func (u Upload) UploadSave(c *gin.Context) {
+func (u *Upload) UploadClose() {
+	_ = os.RemoveAll(u.ChartDir)
+}
+
+type UploadSaveError struct {
+	S string
+}
+
+func (e *UploadSaveError) Error() string {
+	return e.S
+}
+
+func (u *Upload) UploadSave(c *gin.Context) *UploadSaveError {
 	// 多文件上传
 	form, _ := c.MultipartForm()
-	files := form.File["upload[]"]
+	files := form.File["files"]
 
 	// save Chart file
 	for _, file := range files {
 		fileName := strings.Split(file.Filename, ".")
 		switch fileName[0] {
 		case "values":
-			if err := c.SaveUploadedFile(file, u.ChartDir); err != nil {
-				c.String(http.StatusBadRequest, "decode values failure")
+			if err := c.SaveUploadedFile(file, u.ChartDir+"/"+file.Filename); err != nil {
+				return &UploadSaveError{"decode values failure"}
+				//return error{ return "decode values failure"}
 			}
 			u.checkMark.values++
 		case "Chart":
-			if err := c.SaveUploadedFile(file, u.ChartDir); err != nil {
-				c.String(http.StatusBadRequest, "decode Chart failure")
+			if err := c.SaveUploadedFile(file, u.ChartDir+"/"+file.Filename); err != nil {
+				return &UploadSaveError{"decode Chart failure"}
 			}
 			u.checkMark.chart++
 		case "_helpers":
-			if err := c.SaveUploadedFile(file, u.ChartDir+"/templates"); err != nil {
-				c.String(http.StatusBadRequest, "decode Chart failure")
+			if err := c.SaveUploadedFile(file, u.ChartDir+"/templates/"+file.Filename); err != nil {
+				return &UploadSaveError{"decode Chart failure"}
 			}
 			u.checkMark.helpers++
 		default:
-			if err := c.SaveUploadedFile(file, u.ChartDir+"/templates"); err != nil {
-				c.String(http.StatusBadRequest, "decode template yaml failure")
+			if err := c.SaveUploadedFile(file, u.ChartDir+"/templates/"+file.Filename); err != nil {
+				return &UploadSaveError{"decode template yaml failure"}
 			}
 			u.checkMark.templates++
 
@@ -67,14 +79,16 @@ func (u Upload) UploadSave(c *gin.Context) {
 	}
 
 	// check Chart file
-	if u.checkMark.values*u.checkMark.chart*u.checkMark.helpers*u.checkMark.templates < 0 {
+	if u.checkMark.values*u.checkMark.chart*u.checkMark.helpers*u.checkMark.templates < 1 {
 		log.Printf("values: %d, chart: %d, helpers : %d, templates: %d",
 			u.checkMark.values,
 			u.checkMark.chart,
 			u.checkMark.helpers,
 			u.checkMark.templates)
 
-		c.String(http.StatusBadRequest, "values/chart/helpers/template is require")
+		return &UploadSaveError{"values/chart/helpers/template is require"}
 	}
+
+	return nil
 
 }

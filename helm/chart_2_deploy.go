@@ -2,16 +2,14 @@ package helm
 
 import (
 	"bytes"
-	"fmt"
 	"os/exec"
 )
 
-func Chart2Deploy(chartFile string) (string, error) {
-
-	command := fmt.Sprint("helm install --dry-run tmp %s", chartFile)
+func Chart2Deploy(chartFile string) ([]byte, error) {
 
 	// helm
-	cmd := exec.Command(command)
+
+	cmd := exec.Command("helm", "install", "--dry-run", "tmp", chartFile)
 
 	var stdout, stderr bytes.Buffer
 
@@ -19,13 +17,16 @@ func Chart2Deploy(chartFile string) (string, error) {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return "", err
+		return stderr.Bytes(), err
 	}
 
-	if stderr.Len() > 0 {
-		return stderr.String(), nil
-	}
+	return Formatter(stdout.Bytes())
 
-	return stdout.String(), nil
+}
 
+func Formatter(chartOutPut []byte) ([]byte, error) {
+
+	SIndex := bytes.Index(chartOutPut, []byte("# Source"))
+	deploy := chartOutPut[SIndex:]
+	return deploy, nil
 }
