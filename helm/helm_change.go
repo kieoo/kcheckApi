@@ -22,8 +22,8 @@ func HelmChange(c *gin.Context) {
 	}
 
 	// chart template to deploy
-
-	template, err := Chart2Deploy(up.ChartDir)
+	chartDir := up.TmpDir + "/" + string(up.ChartName)
+	template, err := Chart2Deploy(chartDir)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("chage error : %s", string(template))})
