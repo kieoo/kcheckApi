@@ -4,20 +4,16 @@ package kcheck
 import (
 	yaml "github.com/ghodss/yaml"
 	v1 "k8s.io/api/apps/v1"
+	p "kcheckApi/params"
 )
-
-type HintsMap struct {
-	Hints     string `json:"hints"`
-	CheckName string `json:"check_name"`
-}
 
 type WithGracefulTermination struct {
 }
 
-func (c *WithGracefulTermination) Check(data []byte) (HintsMap, error) {
+func (c *WithGracefulTermination) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
-	resultMap := HintsMap{"", "WithGracefulTermination"}
+	resultMap := p.HintsMap{"", "WithGracefulTermination"}
 	if err != nil {
 		return resultMap, err
 	}
@@ -59,10 +55,10 @@ spec:
 type WithHealthCheck struct {
 }
 
-func (c *WithHealthCheck) Check(data []byte) (HintsMap, error) {
+func (c *WithHealthCheck) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
-	resultMap := HintsMap{"", "WithHealthCheck"}
+	resultMap := p.HintsMap{"", "WithHealthCheck"}
 	if err != nil {
 		return resultMap, err
 	}
@@ -105,10 +101,10 @@ spec:
 type WithReadiness struct {
 }
 
-func (c *WithReadiness) Check(data []byte) (HintsMap, error) {
+func (c *WithReadiness) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
-	resultMap := HintsMap{"", "WithReadiness"}
+	resultMap := p.HintsMap{"", "WithReadiness"}
 	if err != nil {
 		return resultMap, err
 	}
@@ -148,10 +144,10 @@ spec:
 type WithResourceRequestAndLimit struct {
 }
 
-func (c *WithResourceRequestAndLimit) Check(data []byte) (HintsMap, error) {
+func (c *WithResourceRequestAndLimit) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
-	resultMap := HintsMap{"", "WithResourceRequestAndLimit"}
+	resultMap := p.HintsMap{"", "WithResourceRequestAndLimit"}
 	if err != nil {
 		return resultMap, err
 	}

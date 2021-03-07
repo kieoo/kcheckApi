@@ -2,23 +2,25 @@ package helm
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"net/http"
+	"kcheckApi/model"
+	p "kcheckApi/params"
 )
 
-func HelmChange(c *gin.Context) {
+func HelmChange(in *p.CRequest, out *p.CResponse) error {
 
 	// save helm chart
 	up := Upload{}
 	if err := up.UploadInit(); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("upload error : %s", err)})
-		return
+		out.Result = model.Fail
+		out.Message = fmt.Sprintf("upload error : %s", err)
+		return err
 	}
 	defer up.UploadClose()
 
-	if err := up.UploadSave(c); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("upload error : %s", err)})
-		return
+	if err := up.UploadSave(in.MultipartFile); err != nil {
+		out.Result = model.Fail
+		out.Message = fmt.Sprintf("upload error : %s", err)
+		return err
 	}
 
 	// chart template to deploy
@@ -26,10 +28,14 @@ func HelmChange(c *gin.Context) {
 	template, err := Chart2Deploy(chartDir)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("chage error : %s", string(template))})
-		return
+		out.Result = model.Fail
+		out.Message = fmt.Sprintf("chage error : %s", string(template))
+		return err
 	}
 
-	c.PureJSON(http.StatusOK, gin.H{"msg": string(template)})
+	out.Result = model.PASS
+	in.CheckBody.OriYaml = template
+	out.Message = ""
 
+	return nil
 }

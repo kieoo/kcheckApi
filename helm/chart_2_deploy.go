@@ -27,6 +27,9 @@ func Chart2Deploy(chartFile string) ([]byte, error) {
 func Formatter(chartOutPut []byte) ([]byte, error) {
 
 	SIndex := bytes.Index(chartOutPut, []byte("# Source"))
+	if SIndex == -1 {
+		return nil, nil
+	}
 	deploy := chartOutPut[SIndex:]
 	return deploy, nil
 }

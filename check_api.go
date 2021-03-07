@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
-	"kcheckApi/helm"
-	"kcheckApi/kcheck"
+	"kcheckApi/pipeline"
 	"net/http"
 	"os"
 	"regexp"
@@ -36,9 +35,11 @@ func main() {
 		}
 	})
 
-	r.POST("/kcheck", kcheck.NormalCheck)
+	r.POST("/kcheck", pipeline.KCheck)
 
-	r.POST("/upload", helm.HelmChange)
+	r.POST("/upload", pipeline.HelmCheck)
+
+	r.POST("/total_check/Junit_xml", pipeline.TotalCheckXML)
 
 	r.POST("/return2", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"msg": "abc\ndfg"})

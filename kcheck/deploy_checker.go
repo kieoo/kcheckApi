@@ -2,9 +2,9 @@ package kcheck
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"io/ioutil"
-	"net/http"
+	"kcheckApi/model"
+	p "kcheckApi/params"
 	"os"
 )
 
@@ -29,13 +29,7 @@ func loadDataFromFile(filePath string) ([]byte, error) {
 // Checker is to check the K8S deployment/configuration with the different rules
 type Checker interface {
 	// Check is to check the file and return the suggestions
-	Check(data []byte) (HintsMap, error)
-}
-
-type checkBody struct {
-	OriYaml    string `json:"ori_yaml" form:"ori_yaml" binding:"required"`
-	RuleConfig string `json:"rule_config" form:"rule_config" binding:"required"`
-	RuleName   string `json:"rule_name" form:"rule_name" binding:"required"`
+	Check(data []byte) (p.HintsMap, error)
 }
 
 // Rule is composed of a set of checkers
@@ -53,36 +47,59 @@ func isStringParamValid(param *string) bool {
 	return true
 }
 
-func paramChecker(c *gin.Context, param *string, prompt string) {
+type SaveError struct {
+	S string
+}
+
+func (e *SaveError) Error() string {
+	return e.S
+}
+
+func paramChecker(param *string, prompt string) *SaveError {
 
 	isOk := isStringParamValid(param)
 
 	if !isOk {
-		c.String(http.StatusBadRequest, *param)
+		return &SaveError{prompt}
 	}
+
+	return nil
 }
 
-func NormalCheck(c *gin.Context) {
-	p := checkBody{}
-	if err := c.BindJSON(&p); err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "checkBody error"})
-		return
+func NormalCheck(in *p.CRequest, out *p.CResponse) error {
+
+	checkBody := p.CheckBody{}
+
+	checkBody = in.CheckBody
+
+	srcYaml := string(checkBody.CheckYaml)
+	ruleConfig := checkBody.RuleConfig
+	ruleName := checkBody.RuleName
+
+	if err := paramChecker(&srcYaml, "Set the yaml needing"); err != nil {
+		out.Result = model.Fail
+		out.Message = fmt.Sprintf("%s", err)
+		return err
 	}
 
-	srcYaml := p.OriYaml
-	ruleConfig := p.RuleConfig
-	ruleName := p.RuleName
-	paramChecker(c, &srcYaml, "Set the yaml needing")
-	paramChecker(c, &ruleConfig, "Set the rule file for checking")
-	paramChecker(c, &ruleName, "Set the rule name for checking")
+	if err := paramChecker(&ruleConfig, "Set the rule file for checking"); err != nil {
+		out.Result = model.Fail
+		out.Message = fmt.Sprintf("%s", err)
+		return err
+	}
+
+	if err := paramChecker(&ruleName, "Set the rule name for checking"); err != nil {
+		out.Result = model.Fail
+		out.Message = fmt.Sprintf("%s", err)
+		return err
+	}
 
 	ruleSet, _, err := ParserRuleSetConfig("conf/" + ruleConfig)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest,
-			gin.H{"msg": fmt.Sprintf("Failed to load the file '%s'.", ruleConfig)})
-		return
+		out.Result = model.Fail
+		out.Message = fmt.Sprintf("Failed to load the file '%s'.", ruleConfig)
+		return &SaveError{out.Message}
 	}
 
 	var rule *Rule
@@ -93,18 +110,19 @@ func NormalCheck(c *gin.Context) {
 	}
 
 	if rule == nil {
-		c.JSON(http.StatusBadRequest,
-			gin.H{"msg": fmt.Sprintf("Could not find the checking rule '%s'.", ruleName)})
-		return
+		out.Result = model.Fail
+		out.Message = fmt.Sprintf("Could not find the checking rule '%s'.", ruleName)
+		return &SaveError{out.Message}
 	}
 
-	var resultMap []HintsMap
+	var resultMap []p.HintsMap
 
 	for _, check := range rule.Checkers {
 		hintMap, err := check.Check([]byte(srcYaml))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"msg": "Checking error"})
-			return
+			out.Result = model.Fail
+			out.Message = fmt.Sprintf("Checking erro %s", err)
+			return &SaveError{out.Message}
 		}
 		if len(hintMap.Hints) > 0 {
 			resultMap = append(resultMap, hintMap)
@@ -113,11 +131,9 @@ func NormalCheck(c *gin.Context) {
 
 	// jsonResultMap, err := json.Marshal(resultMap)
 
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "Checking error"})
-		return
-	}
 	// 想要struct的字段能被marshal, 首字母必须大写+++
-	c.JSON(http.StatusOK, resultMap)
+	out.Result = model.PASS
+	out.Hints = resultMap
+	return nil
 
 }

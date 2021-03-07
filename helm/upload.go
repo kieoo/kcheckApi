@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"io"
 	"log"
 	"math/rand"
@@ -50,12 +49,10 @@ func (e *UploadSaveError) Error() string {
 	return e.S
 }
 
-func (u *Upload) UploadSave(c *gin.Context) *UploadSaveError {
+func (u *Upload) UploadSave(files []*multipart.FileHeader) *UploadSaveError {
 	// 多文件上传
-	form, _ := c.MultipartForm()
-	files := form.File["files"]
 
-	is_files_model := false
+	isFilesModel := false
 	// save Chart file
 	for _, file := range files {
 		fileName := strings.Split(file.Filename, ".")
@@ -63,7 +60,7 @@ func (u *Upload) UploadSave(c *gin.Context) *UploadSaveError {
 		// zip 包模式
 		if fileName[1] == "zip" {
 			u.ChartName = []byte(fileName[0])
-			if err := c.SaveUploadedFile(file, u.TmpDir+"/"+file.Filename); err != nil {
+			if err := SaveUploadedFile(file, u.TmpDir+"/"+file.Filename); err != nil {
 				return &UploadSaveError{"save zip failed"}
 			}
 
@@ -99,27 +96,27 @@ func (u *Upload) UploadSave(c *gin.Context) *UploadSaveError {
 			return &UploadSaveError{"decode failure"}
 		}
 
-		is_files_model = true
+		isFilesModel = true
 		switch fileName[0] {
 		case "values":
-			if err := c.SaveUploadedFile(file, ChartDir+"/"+file.Filename); err != nil {
+			if err := SaveUploadedFile(file, ChartDir+"/"+file.Filename); err != nil {
 				return &UploadSaveError{"decode values failure"}
 				//return error{ return "decode values failure"}
 			}
 			u.checkMark.values++
 		case "Chart":
-			if err := c.SaveUploadedFile(file, ChartDir+"/"+file.Filename); err != nil {
+			if err := SaveUploadedFile(file, ChartDir+"/"+file.Filename); err != nil {
 				return &UploadSaveError{"decode Chart failure"}
 			}
 			u.checkMark.chart++
 		case "_helpers":
-			if err := c.SaveUploadedFile(file, ChartDir+"/templates/"+file.Filename); err != nil {
+			if err := SaveUploadedFile(file, ChartDir+"/templates/"+file.Filename); err != nil {
 				return &UploadSaveError{"decode _helpers failure"}
 			}
 			u.checkMark.helpers++
 		default:
 
-			if err := c.SaveUploadedFile(file, ChartDir+"/templates/"+file.Filename); err != nil {
+			if err := SaveUploadedFile(file, ChartDir+"/templates/"+file.Filename); err != nil {
 				return &UploadSaveError{"decode template yaml failure"}
 			}
 			u.checkMark.templates++
@@ -128,7 +125,7 @@ func (u *Upload) UploadSave(c *gin.Context) *UploadSaveError {
 	}
 
 	// check Chart file
-	if is_files_model && u.checkMark.values*u.checkMark.chart*u.checkMark.helpers*u.checkMark.templates < 1 {
+	if isFilesModel && u.checkMark.values*u.checkMark.chart*u.checkMark.helpers*u.checkMark.templates < 1 {
 		log.Printf("values: %d, chart: %d, helpers : %d, templates: %d",
 			u.checkMark.values,
 			u.checkMark.chart,
@@ -140,6 +137,23 @@ func (u *Upload) UploadSave(c *gin.Context) *UploadSaveError {
 
 	return nil
 
+}
+
+func SaveUploadedFile(file *multipart.FileHeader, dst string) error {
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, src)
+	return err
 }
 
 func isZip(zipPath string) bool {
