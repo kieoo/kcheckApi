@@ -76,6 +76,10 @@ func NormalCheck(in *p.CRequest, out *p.CResponse) error {
 	ruleConfig := checkBody.RuleConfig
 	ruleName := checkBody.RuleName
 
+	if len(ruleConfig) <= 0 {
+		ruleConfig = "default.yaml"
+	}
+
 	if err := paramChecker(&srcYaml, "Set the yaml needing"); err != nil {
 		out.Result = model.Fail
 		out.Message = fmt.Sprintf("%s", err)

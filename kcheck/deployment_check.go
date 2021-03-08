@@ -7,10 +7,10 @@ import (
 	p "kcheckApi/params"
 )
 
-type WithGracefulTermination struct {
+type DWithGracefulTermination struct {
 }
 
-func (c *WithGracefulTermination) Check(data []byte) (p.HintsMap, error) {
+func (c *DWithGracefulTermination) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
 	resultMap := p.HintsMap{"", "WithGracefulTermination"}
@@ -52,10 +52,10 @@ spec:
 	return resultMap, nil
 }
 
-type WithHealthCheck struct {
+type DWithLivenessCheck struct {
 }
 
-func (c *WithHealthCheck) Check(data []byte) (p.HintsMap, error) {
+func (c *DWithLivenessCheck) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
 	resultMap := p.HintsMap{"", "WithHealthCheck"}
@@ -98,10 +98,10 @@ spec:
 	return resultMap, nil
 }
 
-type WithReadiness struct {
+type DWithReadiness struct {
 }
 
-func (c *WithReadiness) Check(data []byte) (p.HintsMap, error) {
+func (c *DWithReadiness) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
 	resultMap := p.HintsMap{"", "WithReadiness"}
@@ -141,12 +141,13 @@ spec:
 	return resultMap, nil
 }
 
-type WithResourceRequestAndLimit struct {
+type DWithResourceRequestAndLimit struct {
 }
 
-func (c *WithResourceRequestAndLimit) Check(data []byte) (p.HintsMap, error) {
+func (c *DWithResourceRequestAndLimit) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
+
 	resultMap := p.HintsMap{"", "WithResourceRequestAndLimit"}
 	if err != nil {
 		return resultMap, err
@@ -172,6 +173,82 @@ resources:
       limits:
         memory: "128Mi"
         cpu: "500m"` + "\n"
+
+			}
+
+		}
+	}
+	if hints == "" {
+		return resultMap, nil
+	}
+	resultMap.Hints = hints
+	return resultMap, nil
+}
+
+type WithRollingUpdate struct{}
+
+func (c *WithRollingUpdate) Check(data []byte) (p.HintsMap, error) {
+	deploy := &v1.Deployment{}
+	err := yaml.Unmarshal(data, deploy)
+
+	resultMap := p.HintsMap{"", "WithRollingUpdate"}
+	if err != nil {
+		return resultMap, err
+	}
+	if deploy.Kind != "Deployment" {
+		return resultMap, nil
+	}
+	hints := ""
+	if deploy.Spec.Strategy.Type == "RollingUpdate" &&
+		deploy.Spec.Strategy.RollingUpdate != nil &&
+		deploy.Spec.Strategy.RollingUpdate.MaxSurge != nil &&
+		deploy.Spec.Strategy.RollingUpdate.MaxSurge.IntVal >= 50 &&
+		deploy.Spec.Strategy.RollingUpdate.MaxUnavailable != nil &&
+		deploy.Spec.Strategy.RollingUpdate.MaxUnavailable.IntVal >= 50 {
+
+		hints = "'MaxSurge & MaxUnavailable' should be set and < 50 " +
+			`
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate` + "\n"
+
+	}
+	if hints == "" {
+		return resultMap, nil
+	}
+	resultMap.Hints = hints
+	return resultMap, nil
+}
+
+type DWithEmptyDirSizeLimit struct {
+}
+
+func (c *DWithEmptyDirSizeLimit) Check(data []byte) (p.HintsMap, error) {
+	deploy := &v1.Deployment{}
+	err := yaml.Unmarshal(data, deploy)
+
+	resultMap := p.HintsMap{"", "DWithEmptyDirSizeLimit"}
+	if err != nil {
+		return resultMap, err
+	}
+	if deploy.Kind != "Deployment" {
+		return resultMap, nil
+	}
+	hints := ""
+	if deploy.Spec.Template.Spec.Volumes != nil &&
+		len(deploy.Spec.Template.Spec.Volumes) > 0 {
+		for i := 0; i < len(deploy.Spec.Template.Spec.Volumes); i++ {
+			if deploy.Spec.Template.Spec.Volumes[i].EmptyDir != nil &&
+				deploy.Spec.Template.Spec.Volumes[i].EmptyDir.SizeLimit == nil {
+
+				hints = "'Volumes emptyDir limits' should be set for emptyDir: " +
+					deploy.Spec.Template.Spec.Volumes[i].Name + "." +
+					`
+emptyDir:
+  sizeLimit: 4Gi` + "\n"
 
 			}
 

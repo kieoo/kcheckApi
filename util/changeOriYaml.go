@@ -21,7 +21,7 @@ func CleanOriYaml(ori []byte) map[string][]byte {
 			continue
 		}
 		matchDeploy, _ := regexp.Match(`kind:\s*Deployment`, v)
-		matchState, _ := regexp.Match(`kind:\s*Statefulset`, v)
+		matchState, _ := regexp.Match(`kind:\s*StatefulSet`, v)
 		if !matchDeploy && !matchState {
 			continue
 		}

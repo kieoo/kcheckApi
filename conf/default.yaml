@@ -1,0 +1,18 @@
+rules:
+- name: spot
+  checkItems:
+  - RunningOnDifferentNodes
+  - WithGracefulTermination
+  - WithHealthCheck
+  - WithResourceRequestAndLimit
+- name: deployment
+  checkItems:
+  - DWithLiveness
+  - DWithResourceRequestAndLimit
+  - DWithReadiness
+  - WithRollingUpdate
+- name: statefulSet
+  checkItems:
+  - SWithLiveness
+  - SWithResourceRequestAndLimit
+  - SWithReadiness

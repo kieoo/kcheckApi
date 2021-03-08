@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	h "kcheckApi/helm"
+	k "kcheckApi/kcheck"
 	"kcheckApi/model"
 	p "kcheckApi/params"
 	"kcheckApi/util"
 	"log"
 	"net/http"
+	"regexp"
 	"time"
 )
 
@@ -37,7 +39,7 @@ func TotalCheckXML(c *gin.Context) {
 	testSuite := &model.TestSuite{}
 	testSuite.Name = out.FileName
 
-	// helm check
+	// helm check >>>>>>>>>>>>>>>>>>>>>>
 	HTestCase := &model.TestCase{}
 	testSuite.TCs = append(testSuite.TCs, HTestCase)
 	// 开始检查
@@ -56,17 +58,66 @@ func TotalCheckXML(c *gin.Context) {
 
 	HTestCase.Status = model.PASS
 
-	util.CleanOriYaml(in.CheckBody.OriYaml)
-	// kchecker
+	// kchecker >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+	checkYamlList := util.CleanOriYaml(in.CheckBody.OriYaml)
+
+	for fileName, checkYaml := range checkYamlList {
+		in.CheckBody.CheckYaml = checkYaml
+
+		if matchState, _ := regexp.Match(`kind:\s*StatefulSet`, checkYaml); matchState {
+			in.CheckBody.RuleName = "statefulSet"
+		} else {
+			in.CheckBody.RuleName = "deployment"
+		}
+
+		// 开始检查
+		err := k.NormalCheck(in, out)
+		// result
+		//声明testCase
+		if err != nil {
+			TestCase := &model.TestCase{}
+			TestCase.ClassN = out.FileName
+			TestCase.Name = fileName + " normal check"
+			TestCase.SystemOut = model.SystemOUTStart + out.Message + model.SystemOUTEnd
+			TestCase.Status = model.Fail
+			testSuite.TCs = append(testSuite.TCs, HTestCase)
+			continue
+		}
+
+		if len(out.Hints) > 0 {
+			for _, hint := range out.Hints {
+				TestCase := &model.TestCase{}
+				TestCase.ClassN = out.FileName
+				TestCase.Name = fileName + " normal check-" + string(hint.CheckName)
+				TestCase.SystemOut = model.SystemOUTStart + hint.Hints + model.SystemOUTEnd
+				TestCase.Status = model.Fail
+				testSuite.TCs = append(testSuite.TCs, HTestCase)
+			}
+			continue
+		}
+
+		// else
+		TestCase := &model.TestCase{}
+		TestCase.ClassN = out.FileName
+		TestCase.Name = fileName + " normal check"
+		TestCase.SystemOut = model.SystemOUTStart + out.Message + model.SystemOUTEnd
+		TestCase.Status = model.PASS
+		testSuite.TCs = append(testSuite.TCs, HTestCase)
+	}
+
+	// finish
+	c.Data(http.StatusOK, "text/xml", outXml(testSuite))
+
+	return
 }
 
 func outXml(testSuite *model.TestSuite) []byte {
 	testSuite.Failures = 0
 	testSuite.Tests = int32(len(testSuite.TCs))
 
-	var tc model.TestCase
-	for tc = range testSuite.TCs {
+	var tc *model.TestCase
+	for _, tc = range testSuite.TCs {
 		if tc.Status != model.PASS {
 			testSuite.Failures++
 		}

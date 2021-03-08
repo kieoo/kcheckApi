@@ -6,6 +6,7 @@ import (
 	k "kcheckApi/kcheck"
 	p "kcheckApi/params"
 	"net/http"
+	"regexp"
 )
 
 func KCheck(c *gin.Context) {
@@ -18,6 +19,10 @@ func KCheck(c *gin.Context) {
 		return
 	}
 	statusCode := http.StatusOK
+
+	if matchState, _ := regexp.Match(`kind:\s*StatefulSet`, in.CheckBody.OriYaml); matchState {
+		in.CheckBody.RuleName = "statefulSet"
+	}
 	// k check
 	if err := k.NormalCheck(in, out); err != nil {
 		statusCode = http.StatusBadRequest
