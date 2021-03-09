@@ -39,7 +39,7 @@ spec:
 			if deploy.Spec.Template.Spec.Containers[i].Lifecycle == nil ||
 				deploy.Spec.Template.Spec.Containers[i].Lifecycle.PreStop == nil {
 
-				hints = hints + deploy.Spec.Template.Spec.Containers[i].Name + ". \n"
+				hints = hints + " - " + deploy.Spec.Template.Spec.Containers[i].Name + ". \n"
 			}
 
 		}
@@ -88,7 +88,7 @@ spec:
 		for i := 0; i < len(deploy.Spec.Template.Spec.Containers); i++ {
 			if deploy.Spec.Template.Spec.Containers[i].LivenessProbe == nil {
 
-				hints = hints + deploy.Spec.Template.Spec.Containers[i].Name + ".\n"
+				hints = hints + " - " + deploy.Spec.Template.Spec.Containers[i].Name + ".\n"
 
 			}
 
@@ -97,7 +97,9 @@ spec:
 	if hints == "" {
 		return resultMap, nil
 	}
-	resultMap.Hints = hints
+	hintsAll := hintsTitle + hints + hintsContent
+
+	resultMap.Hints = hintsAll
 	return resultMap, nil
 }
 
@@ -132,7 +134,7 @@ spec:
 		for i := 0; i < len(deploy.Spec.Template.Spec.Containers); i++ {
 			if deploy.Spec.Template.Spec.Containers[i].ReadinessProbe == nil {
 
-				hints = hints + deploy.Spec.Template.Spec.Containers[i].Name + ".\n"
+				hints = hints + " - " + deploy.Spec.Template.Spec.Containers[i].Name + ".\n"
 
 			}
 
@@ -142,7 +144,9 @@ spec:
 		return resultMap, nil
 	}
 
-	resultMap.Hints = hints
+	hintsAll := hintsTitle + hints + hintsContent
+
+	resultMap.Hints = hintsAll
 	return resultMap, nil
 }
 
@@ -179,7 +183,7 @@ spec:
 			if deploy.Spec.Template.Spec.Containers[i].Resources.Requests == nil ||
 				deploy.Spec.Template.Spec.Containers[i].Resources.Limits == nil {
 
-				hints = hints + deploy.Spec.Template.Spec.Containers[i].Name + ".\n"
+				hints = hints + " - " + deploy.Spec.Template.Spec.Containers[i].Name + ".\n"
 			}
 
 		}
@@ -224,6 +228,25 @@ spec:
     type: RollingUpdate` + "\n"
 
 	}
+
+	if deploy.Spec.Strategy.Type == "RollingUpdate" &&
+		deploy.Spec.Strategy.RollingUpdate != nil &&
+		deploy.Spec.Strategy.RollingUpdate.MaxSurge != nil &&
+		deploy.Spec.Strategy.RollingUpdate.MaxSurge.StrVal >= "50%" &&
+		deploy.Spec.Strategy.RollingUpdate.MaxUnavailable != nil &&
+		deploy.Spec.Strategy.RollingUpdate.MaxUnavailable.StrVal >= "50%" {
+
+		hints = "'MaxSurge & MaxUnavailable' should be set and < 50 " +
+			`
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate` + "\n"
+
+	}
+
 	if hints == "" {
 		return resultMap, nil
 	}
@@ -259,7 +282,7 @@ emptyDir:
 			if deploy.Spec.Template.Spec.Volumes[i].EmptyDir != nil &&
 				deploy.Spec.Template.Spec.Volumes[i].EmptyDir.SizeLimit == nil {
 
-				hints = hints + deploy.Spec.Template.Spec.Volumes[i].Name + ".\n"
+				hints = hints + " - " + deploy.Spec.Template.Spec.Volumes[i].Name + ".\n"
 
 			}
 

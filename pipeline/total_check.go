@@ -64,6 +64,7 @@ func TotalCheckXML(c *gin.Context) {
 
 	for fileName, checkYaml := range checkYamlList {
 		in.CheckBody.CheckYaml = checkYaml
+		out.Hints = []p.HintsMap{}
 
 		if matchState, _ := regexp.Match(`kind:\s*StatefulSet`, checkYaml); matchState {
 			in.CheckBody.RuleName = "statefulSet"

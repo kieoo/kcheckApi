@@ -11,8 +11,10 @@ rules:
   - DWithResourceRequestAndLimit
   - DWithReadiness
   - WithRollingUpdate
+  - DWithEmptyDirSizeLimit
 - name: statefulSet
   checkItems:
   - SWithLiveness
   - SWithResourceRequestAndLimit
   - SWithReadiness
+  - SWithEmptyDirSizeLimit

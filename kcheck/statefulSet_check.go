@@ -39,7 +39,7 @@ spec:
 			if stateful.Spec.Template.Spec.Containers[i].Lifecycle == nil ||
 				stateful.Spec.Template.Spec.Containers[i].Lifecycle.PreStop == nil {
 
-				hints = hints + stateful.Spec.Template.Spec.Containers[i].Name + ". \n"
+				hints = hints + " - " + stateful.Spec.Template.Spec.Containers[i].Name + ". \n"
 
 			}
 		}
@@ -89,7 +89,7 @@ spec:
 		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
 			if stateful.Spec.Template.Spec.Containers[i].LivenessProbe == nil {
 
-				hints = hints + stateful.Spec.Template.Spec.Containers[i].Name + ".\n"
+				hints = hints + " - " + stateful.Spec.Template.Spec.Containers[i].Name + ".\n"
 
 			}
 
@@ -136,7 +136,7 @@ spec:
 		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
 			if stateful.Spec.Template.Spec.Containers[i].ReadinessProbe == nil {
 
-				hints = hints +
+				hints = hints + " - " +
 					stateful.Spec.Template.Spec.Containers[i].Name + "."
 			}
 		}
@@ -183,7 +183,7 @@ spec:
 		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
 			if stateful.Spec.Template.Spec.Containers[i].Resources.Requests == nil ||
 				stateful.Spec.Template.Spec.Containers[i].Resources.Limits == nil {
-				hints = hints +
+				hints = hints + " - " +
 					stateful.Spec.Template.Spec.Containers[i].Name + ".\n"
 			}
 
@@ -226,7 +226,7 @@ emptyDir:
 			if stateful.Spec.Template.Spec.Volumes[i].EmptyDir != nil &&
 				stateful.Spec.Template.Spec.Volumes[i].EmptyDir.SizeLimit == nil {
 
-				hints = hints + stateful.Spec.Template.Spec.Volumes[i].Name + ".\n"
+				hints = hints + " - " + stateful.Spec.Template.Spec.Volumes[i].Name + ".\n"
 
 			}
 

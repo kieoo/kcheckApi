@@ -9,7 +9,7 @@ func init() {
 	//Checkers["RunningOnDifferentNodes"] = &RunningOnDifferentNodes{}
 	// Deploy Checker
 	Checkers["DWithGracefulTermination"] = &DWithGracefulTermination{}
-	Checkers["DWithLivenessCheck"] = &DWithLivenessCheck{}
+	Checkers["DWithLiveness"] = &DWithLivenessCheck{}
 	Checkers["DWithResourceRequestAndLimit"] = &DWithResourceRequestAndLimit{}
 	Checkers["DWithReadiness"] = &DWithReadiness{}
 	Checkers["WithRollingUpdate"] = &WithRollingUpdate{}
@@ -17,7 +17,7 @@ func init() {
 
 	// Stateful Checker
 	Checkers["SWithGracefulTermination"] = &SWithGracefulTermination{}
-	Checkers["SWithLivenessCheck"] = &SWithLivenessCheck{}
+	Checkers["SWithLiveness"] = &SWithLivenessCheck{}
 	Checkers["SWithResourceRequestAndLimit"] = &SWithResourceRequestAndLimit{}
 	Checkers["SWithReadiness"] = &SWithReadiness{}
 	Checkers["SWithEmptyDirSizeLimit"] = &SWithEmptyDirSizeLimit{}
