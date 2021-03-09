@@ -13,12 +13,14 @@ func init() {
 	Checkers["DWithResourceRequestAndLimit"] = &DWithResourceRequestAndLimit{}
 	Checkers["DWithReadiness"] = &DWithReadiness{}
 	Checkers["WithRollingUpdate"] = &WithRollingUpdate{}
+	Checkers["DWithEmptyDirSizeLimit"] = &DWithEmptyDirSizeLimit{}
 
 	// Stateful Checker
 	Checkers["SWithGracefulTermination"] = &SWithGracefulTermination{}
 	Checkers["SWithLivenessCheck"] = &SWithLivenessCheck{}
 	Checkers["SWithResourceRequestAndLimit"] = &SWithResourceRequestAndLimit{}
 	Checkers["SWithReadiness"] = &SWithReadiness{}
+	Checkers["SWithEmptyDirSizeLimit"] = &SWithEmptyDirSizeLimit{}
 
 }
 
@@ -35,6 +37,8 @@ var deploymentCheckSet = &Rule{
 		&DWithLivenessCheck{},
 		&DWithResourceRequestAndLimit{},
 		&DWithReadiness{},
+		&WithRollingUpdate{},
+		&DWithEmptyDirSizeLimit{},
 	},
 }
 
@@ -44,6 +48,7 @@ var statefulsetCheckSet = &Rule{
 		&SWithLivenessCheck{},
 		&SWithResourceRequestAndLimit{},
 		&SWithReadiness{},
+		&SWithEmptyDirSizeLimit{},
 	},
 }
 

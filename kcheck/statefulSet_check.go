@@ -19,17 +19,10 @@ func (c *SWithGracefulTermination) Check(data []byte) (p.HintsMap, error) {
 	if stateful.Kind != "StatefulSet" {
 		return resultMap, nil
 	}
+	hintsTitle := "'preStop' should be set for a graceful termination containers: \n"
 	hints := ""
-	if stateful.Spec.Template.Spec.Containers != nil &&
-		len(stateful.Spec.Template.Spec.Containers) > 0 {
-		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
-			if stateful.Spec.Template.Spec.Containers[i].Lifecycle == nil ||
-				stateful.Spec.Template.Spec.Containers[i].Lifecycle.PreStop == nil {
-
-				hints = "'preStop' should be set for a graceful termination [container: " +
-					stateful.Spec.Template.Spec.Containers[i].Name + "]." +
-
-					`
+	hintsContent :=
+		`
 spec:
   containers:
   - name: lifecycle-demo-container
@@ -40,14 +33,24 @@ spec:
           command: ["/bin/sh","-c","nginx -s quit"]
 			` + "\n"
 
-			}
+	if stateful.Spec.Template.Spec.Containers != nil &&
+		len(stateful.Spec.Template.Spec.Containers) > 0 {
+		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
+			if stateful.Spec.Template.Spec.Containers[i].Lifecycle == nil ||
+				stateful.Spec.Template.Spec.Containers[i].Lifecycle.PreStop == nil {
 
+				hints = hints + stateful.Spec.Template.Spec.Containers[i].Name + ". \n"
+
+			}
 		}
 	}
 	if hints == "" {
 		return resultMap, nil
 	}
-	resultMap.Hints = hints
+
+	hintsAll := hintsTitle + hints + hintsContent
+
+	resultMap.Hints = hintsAll
 	return resultMap, nil
 }
 
@@ -64,16 +67,11 @@ func (c *SWithLivenessCheck) Check(data []byte) (p.HintsMap, error) {
 	if stateful.Kind != "StatefulSet" {
 		return resultMap, nil
 	}
+
+	hintsTitle := "'LivenessProbe' should be set for container: \n"
 	hints := ""
-	if stateful.Spec.Template.Spec.Containers != nil &&
-		len(stateful.Spec.Template.Spec.Containers) > 0 {
-		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
-			if stateful.Spec.Template.Spec.Containers[i].LivenessProbe == nil {
-
-				hints = "'LivenessProbe' should be set for container: " +
-					stateful.Spec.Template.Spec.Containers[i].Name + "." +
-
-					`
+	hintsContent :=
+		`
 spec:
   containers:
   - name: lifecycle-demo-container
@@ -86,6 +84,13 @@ spec:
       initialDelaySeconds: 5
       periodSeconds: 5` + "\n"
 
+	if stateful.Spec.Template.Spec.Containers != nil &&
+		len(stateful.Spec.Template.Spec.Containers) > 0 {
+		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
+			if stateful.Spec.Template.Spec.Containers[i].LivenessProbe == nil {
+
+				hints = hints + stateful.Spec.Template.Spec.Containers[i].Name + ".\n"
+
 			}
 
 		}
@@ -93,7 +98,10 @@ spec:
 	if hints == "" {
 		return resultMap, nil
 	}
-	resultMap.Hints = hints
+
+	hintsAll := hintsTitle + hints + hintsContent
+
+	resultMap.Hints = hintsAll
 	return resultMap, nil
 }
 
@@ -110,33 +118,36 @@ func (c *SWithReadiness) Check(data []byte) (p.HintsMap, error) {
 	if stateful.Kind != "StatefulSet" {
 		return resultMap, nil
 	}
+
+	hintsTitle := "It is nice to have 'ReadinessProbe' setting for container:  \n"
 	hints := ""
-	if stateful.Spec.Template.Spec.Containers != nil &&
-		len(stateful.Spec.Template.Spec.Containers) > 0 {
-		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
-			if stateful.Spec.Template.Spec.Containers[i].ReadinessProbe == nil {
-
-				hints = "It is nice to have 'ReadinessProbe' setting for container: " +
-					stateful.Spec.Template.Spec.Containers[i].Name + "." +
-
-					`
+	hintsContent :=
+		`
 spec:
   containers:
     readinessProbe:
       tcpSocket:
         port: 8080
       initialDelaySeconds: 5
-      periodSeconds: 10 `
+      periodSeconds: 10 ` + "\n"
 
+	if stateful.Spec.Template.Spec.Containers != nil &&
+		len(stateful.Spec.Template.Spec.Containers) > 0 {
+		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
+			if stateful.Spec.Template.Spec.Containers[i].ReadinessProbe == nil {
+
+				hints = hints +
+					stateful.Spec.Template.Spec.Containers[i].Name + "."
 			}
-
 		}
 	}
 	if hints == "" {
 		return resultMap, nil
 	}
 
-	resultMap.Hints = hints
+	hintsAll := hintsTitle + hints + hintsContent
+
+	resultMap.Hints = hintsAll
 	return resultMap, nil
 }
 
@@ -154,24 +165,68 @@ func (c *SWithResourceRequestAndLimit) Check(data []byte) (p.HintsMap, error) {
 	if stateful.Kind != "StatefulSet" {
 		return resultMap, nil
 	}
+
+	hintsTitle := "'Resource requests & limits' should be set for container: \n"
 	hints := ""
+	hintsContent :=
+		`
+spec:
+  containers:
+    readinessProbe:
+      tcpSocket:
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 10 ` + "\n"
+
 	if stateful.Spec.Template.Spec.Containers != nil &&
 		len(stateful.Spec.Template.Spec.Containers) > 0 {
 		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
 			if stateful.Spec.Template.Spec.Containers[i].Resources.Requests == nil ||
 				stateful.Spec.Template.Spec.Containers[i].Resources.Limits == nil {
+				hints = hints +
+					stateful.Spec.Template.Spec.Containers[i].Name + ".\n"
+			}
 
-				hints = "'Resource requests & limits' should be set for container: " +
-					stateful.Spec.Template.Spec.Containers[i].Name + "." +
+		}
+	}
+	if hints == "" {
+		return resultMap, nil
+	}
+	hintsAll := hintsTitle + hints + hintsContent
 
-					`
-resources:
-      requests:
-        memory: "64Mi"
-        cpu: "250m"
-      limits:
-        memory: "128Mi"
-        cpu: "500m"` + "\n"
+	resultMap.Hints = hintsAll
+	return resultMap, nil
+}
+
+type SWithEmptyDirSizeLimit struct {
+}
+
+func (c *SWithEmptyDirSizeLimit) Check(data []byte) (p.HintsMap, error) {
+	stateful := &v1.StatefulSet{}
+	err := yaml.Unmarshal(data, stateful)
+
+	resultMap := p.HintsMap{"", "DWithEmptyDirSizeLimit"}
+	if err != nil {
+		return resultMap, err
+	}
+	if stateful.Kind != "StatefulSet" {
+		return resultMap, nil
+	}
+
+	hintsTitle := "'Volumes emptyDir limits' should be set for emptyDir: \n"
+	hints := ""
+	hintsContent :=
+		`
+emptyDir:
+  sizeLimit: 4Gi` + "\n"
+
+	if stateful.Spec.Template.Spec.Volumes != nil &&
+		len(stateful.Spec.Template.Spec.Volumes) > 0 {
+		for i := 0; i < len(stateful.Spec.Template.Spec.Volumes); i++ {
+			if stateful.Spec.Template.Spec.Volumes[i].EmptyDir != nil &&
+				stateful.Spec.Template.Spec.Volumes[i].EmptyDir.SizeLimit == nil {
+
+				hints = hints + stateful.Spec.Template.Spec.Volumes[i].Name + ".\n"
 
 			}
 
@@ -180,6 +235,8 @@ resources:
 	if hints == "" {
 		return resultMap, nil
 	}
-	resultMap.Hints = hints
+	hintsAll := hintsTitle + hints + hintsContent
+
+	resultMap.Hints = hintsAll
 	return resultMap, nil
 }
