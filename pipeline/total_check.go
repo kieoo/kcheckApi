@@ -11,6 +11,7 @@ import (
 	"kcheckApi/util"
 	"log"
 	"net/http"
+	"path/filepath"
 	"regexp"
 	"time"
 )
@@ -20,6 +21,17 @@ func TotalCheckXML(c *gin.Context) {
 	in := &p.CRequest{}
 	out := &p.CResponse{}
 	form, _ := c.MultipartForm()
+
+	if form == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "MultipartForm key files is need"})
+		return
+	}
+
+	if _, ok := form.File["files"]; !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "MultipartForm key files is need"})
+		return
+	}
+
 	files := form.File["files"]
 
 	if len(files) <= 0 {
@@ -29,7 +41,7 @@ func TotalCheckXML(c *gin.Context) {
 
 	in.MultipartFile = files
 
-	out.FileName = files[0].Filename
+	out.FileName = filepath.Dir(files[0].Filename)
 
 	c.Header("Content-Type", "application/octet-stream")
 	c.Header("Content-Disposition", "attachment; filename="+out.FileName+".xml")

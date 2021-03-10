@@ -12,6 +12,17 @@ func HelmCheck(c *gin.Context) {
 	in := &p.CRequest{}
 	out := &p.CResponse{}
 	form, _ := c.MultipartForm()
+
+	if form == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "MultipartForm key files is need"})
+		return
+	}
+
+	if _, ok := form.File["files"]; !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "MultipartForm key files is need"})
+		return
+	}
+
 	files := form.File["files"]
 
 	if len(files) <= 0 {
