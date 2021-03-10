@@ -8,13 +8,17 @@ type TestSuite struct {
 	Tests     int32       `xml:"tests,attr"`
 	Time      float32     `xml:"time,attr"`
 	Timestamp string      `xml:"timestamp,attr"`
-	TCs       []*TestCase `xml:"testcase"`
+	TestCases []*TestCase `xml:"testcase"`
 }
 
 type TestCase struct {
-	ClassN    string  `xml:"classname,attr"`
-	Name      string  `xml:"name,attr"`
-	Status    string  `xml:"status,attr"`
-	Time      float32 `xml:"time,attr"`
-	SystemOut string  `xml:"system-out"`
+	ClassN    string    `xml:"classname,attr"`
+	Name      string    `xml:"name,attr"`
+	Status    string    `xml:"status,attr"`
+	Time      float32   `xml:"time,attr"`
+	SystemOut SystemOut `xml:"system-out"`
+}
+
+type SystemOut struct {
+	Out string `xml:",cdata"`
 }

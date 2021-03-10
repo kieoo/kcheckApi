@@ -53,14 +53,14 @@ func TotalCheckXML(c *gin.Context) {
 
 	// helm check >>>>>>>>>>>>>>>>>>>>>>
 	HTestCase := &model.TestCase{}
-	testSuite.TCs = append(testSuite.TCs, HTestCase)
+	testSuite.TestCases = append(testSuite.TestCases, HTestCase)
 	// 开始检查
 	err := h.HelmChange(in, out)
 
 	// result
 	HTestCase.ClassN = out.FileName
 	HTestCase.Name = "helm check"
-	HTestCase.SystemOut = model.SystemOUTStart + out.Message + model.SystemOUTEnd
+	HTestCase.SystemOut.Out = out.Message
 
 	if err != nil {
 		HTestCase.Status = model.Fail
@@ -92,9 +92,9 @@ func TotalCheckXML(c *gin.Context) {
 			TestCase := &model.TestCase{}
 			TestCase.ClassN = out.FileName
 			TestCase.Name = fileName + " normal check"
-			TestCase.SystemOut = model.SystemOUTStart + out.Message + model.SystemOUTEnd
+			TestCase.SystemOut.Out = out.Message
 			TestCase.Status = model.Fail
-			testSuite.TCs = append(testSuite.TCs, HTestCase)
+			testSuite.TestCases = append(testSuite.TestCases, HTestCase)
 			continue
 		}
 
@@ -103,9 +103,9 @@ func TotalCheckXML(c *gin.Context) {
 				TestCase := &model.TestCase{}
 				TestCase.ClassN = out.FileName
 				TestCase.Name = fileName + " normal check-" + string(hint.CheckName)
-				TestCase.SystemOut = model.SystemOUTStart + hint.Hints + model.SystemOUTEnd
+				TestCase.SystemOut.Out = hint.Hints
 				TestCase.Status = model.Fail
-				testSuite.TCs = append(testSuite.TCs, HTestCase)
+				testSuite.TestCases = append(testSuite.TestCases, HTestCase)
 			}
 			continue
 		}
@@ -114,9 +114,9 @@ func TotalCheckXML(c *gin.Context) {
 		TestCase := &model.TestCase{}
 		TestCase.ClassN = out.FileName
 		TestCase.Name = fileName + " normal check"
-		TestCase.SystemOut = model.SystemOUTStart + out.Message + model.SystemOUTEnd
+		TestCase.SystemOut.Out = out.Message
 		TestCase.Status = model.PASS
-		testSuite.TCs = append(testSuite.TCs, HTestCase)
+		testSuite.TestCases = append(testSuite.TestCases, HTestCase)
 	}
 
 	// finish
@@ -127,10 +127,10 @@ func TotalCheckXML(c *gin.Context) {
 
 func outXml(testSuite *model.TestSuite) []byte {
 	testSuite.Failures = 0
-	testSuite.Tests = int32(len(testSuite.TCs))
+	testSuite.Tests = int32(len(testSuite.TestCases))
 
 	var tc *model.TestCase
-	for _, tc = range testSuite.TCs {
+	for _, tc = range testSuite.TestCases {
 		if tc.Status != model.PASS {
 			testSuite.Failures++
 		}
@@ -141,7 +141,7 @@ func outXml(testSuite *model.TestSuite) []byte {
 	testSuite.Timestamp = str
 
 	// struct to xml
-	oXml, err := xml.MarshalIndent(testSuite, "", "'")
+	oXml, err := xml.MarshalIndent(testSuite, "", "  ")
 	log.Printf(fmt.Sprintf("%s", err))
 
 	return oXml
