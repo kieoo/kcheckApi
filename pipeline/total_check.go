@@ -94,7 +94,7 @@ func TotalCheckXML(c *gin.Context) {
 			TestCase.Name = fileName + " normal check"
 			TestCase.SystemOut.Out = out.Message
 			TestCase.Status = model.Fail
-			testSuite.TestCases = append(testSuite.TestCases, HTestCase)
+			testSuite.TestCases = append(testSuite.TestCases, TestCase)
 			continue
 		}
 
@@ -105,7 +105,7 @@ func TotalCheckXML(c *gin.Context) {
 				TestCase.Name = fileName + " normal check-" + string(hint.CheckName)
 				TestCase.SystemOut.Out = hint.Hints
 				TestCase.Status = model.Fail
-				testSuite.TestCases = append(testSuite.TestCases, HTestCase)
+				testSuite.TestCases = append(testSuite.TestCases, TestCase)
 			}
 			continue
 		}
@@ -116,7 +116,7 @@ func TotalCheckXML(c *gin.Context) {
 		TestCase.Name = fileName + " normal check"
 		TestCase.SystemOut.Out = out.Message
 		TestCase.Status = model.PASS
-		testSuite.TestCases = append(testSuite.TestCases, HTestCase)
+		testSuite.TestCases = append(testSuite.TestCases, TestCase)
 	}
 
 	// finish

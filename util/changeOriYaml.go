@@ -3,6 +3,7 @@ package util
 import (
 	"bufio"
 	"bytes"
+	"path/filepath"
 	"regexp"
 )
 
@@ -16,7 +17,7 @@ func CleanOriYaml(ori []byte) map[string][]byte {
 
 	out := make(map[string][]byte)
 
-	for i, v := range bytes.Split(deploy, []byte("# Source")) {
+	for i, v := range bytes.Split(deploy, []byte("# Source: ")) {
 		if i == 0 {
 			continue
 		}
@@ -29,8 +30,9 @@ func CleanOriYaml(ori []byte) map[string][]byte {
 		bufReader := bufio.NewReader(bytesReader)
 		filePath, _, _ := bufReader.ReadLine()
 		filePath = bytes.TrimSpace(filePath)
+		fileName := filepath.Base(string(filePath))
 		content := append([]byte("# Source: "), v[:]...)
-		out[string(filePath)] = content
+		out[fileName] = content
 	}
 
 	return out

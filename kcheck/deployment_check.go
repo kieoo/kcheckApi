@@ -231,10 +231,10 @@ spec:
 
 	if deploy.Spec.Strategy.Type == "RollingUpdate" &&
 		deploy.Spec.Strategy.RollingUpdate != nil &&
-		deploy.Spec.Strategy.RollingUpdate.MaxSurge != nil &&
-		deploy.Spec.Strategy.RollingUpdate.MaxSurge.StrVal >= "50%" &&
-		deploy.Spec.Strategy.RollingUpdate.MaxUnavailable != nil &&
-		deploy.Spec.Strategy.RollingUpdate.MaxUnavailable.StrVal >= "50%" {
+		((deploy.Spec.Strategy.RollingUpdate.MaxSurge != nil &&
+			deploy.Spec.Strategy.RollingUpdate.MaxSurge.StrVal >= "50%") ||
+			(deploy.Spec.Strategy.RollingUpdate.MaxUnavailable != nil &&
+				deploy.Spec.Strategy.RollingUpdate.MaxUnavailable.StrVal >= "50%")) {
 
 		hints = "'MaxSurge & MaxUnavailable' should be set and < 50 " +
 			`
