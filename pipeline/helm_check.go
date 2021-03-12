@@ -33,9 +33,9 @@ func HelmCheck(c *gin.Context) {
 	}
 	in.MultipartFile = files
 
-	FileNameList := strings.Split("/", filepath.Dir(files[0].Filename))
+	FileNameList := strings.Split(filepath.ToSlash(files[0].Filename), "/")
 
-	out.FileName = FileNameList[len(FileNameList)-1]
+	out.FileName = FileNameList[0]
 
 	statusCode := http.StatusOK
 	// helm check

@@ -76,6 +76,8 @@ func NormalCheck(in *p.CRequest, out *p.CResponse) error {
 	ruleConfig := checkBody.RuleConfig
 	ruleName := checkBody.RuleName
 
+	out.Result = model.PASS
+
 	if len(ruleConfig) <= 0 {
 		ruleConfig = "default.yaml"
 	}
@@ -129,6 +131,9 @@ func NormalCheck(in *p.CRequest, out *p.CResponse) error {
 			return &SaveError{out.Message}
 		}
 		if len(hintMap.Hints) > 0 {
+			out.Result = model.Fail
+			resultMap = append(resultMap, hintMap)
+		} else {
 			resultMap = append(resultMap, hintMap)
 		}
 	}
@@ -136,7 +141,7 @@ func NormalCheck(in *p.CRequest, out *p.CResponse) error {
 	// jsonResultMap, err := json.Marshal(resultMap)
 
 	// 想要struct的字段能被marshal, 首字母必须大写+++
-	out.Result = model.PASS
+
 	out.Hints = resultMap
 	return nil
 

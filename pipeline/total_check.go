@@ -41,9 +41,9 @@ func TotalCheckXML(c *gin.Context) {
 
 	in.MultipartFile = files
 
-	FileNameList := strings.Split("/", filepath.Dir(files[0].Filename))
+	FileNameList := strings.Split(filepath.ToSlash(files[0].Filename), "/")
 
-	out.FileName = FileNameList[len(FileNameList)-1]
+	out.FileName = FileNameList[0]
 
 	c.Header("Content-Type", "application/octet-stream")
 	c.Header("Content-Disposition", "attachment; filename="+out.FileName+".xml")
@@ -105,15 +105,25 @@ func TotalCheckXML(c *gin.Context) {
 
 		if len(out.Hints) > 0 {
 			for _, hint := range out.Hints {
-				TestCase := &model.TestCase{}
-				TestCase.ClassN = out.FileName
-				TestCase.Name = fileName + " normal check-" + string(hint.CheckName)
-				TestCase.Failure = &model.Failure{Message: "normal check-" + string(hint.CheckName),
-					Out: hint.Hints}
-				TestCase.Failure.Message = "normal check-" + string(hint.CheckName)
-				TestCase.Status = model.Fail
-				TestCase.SystemOut.Out = string(in.CheckBody.CheckYaml)
-				testSuite.TestCases = append(testSuite.TestCases, TestCase)
+				if len(hint.Hints) > 0 {
+					TestCase := &model.TestCase{}
+					TestCase.ClassN = out.FileName
+					TestCase.Name = fileName + " normal check-" + string(hint.CheckName)
+					TestCase.Failure = &model.Failure{Message: "normal check-" + string(hint.CheckName),
+						Out: hint.Hints}
+					TestCase.Failure.Message = "normal check-" + string(hint.CheckName)
+					TestCase.Status = model.Fail
+					TestCase.SystemOut.Out = string(in.CheckBody.CheckYaml)
+					testSuite.TestCases = append(testSuite.TestCases, TestCase)
+				} else {
+					TestCase := &model.TestCase{}
+					TestCase.ClassN = out.FileName
+					TestCase.Name = fileName + " normal check-" + string(hint.CheckName)
+					TestCase.Status = model.PASS
+					TestCase.SystemOut.Out = string(in.CheckBody.CheckYaml)
+					testSuite.TestCases = append(testSuite.TestCases, TestCase)
+				}
+
 			}
 			continue
 		}
