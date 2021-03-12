@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -40,7 +41,9 @@ func TotalCheckXML(c *gin.Context) {
 
 	in.MultipartFile = files
 
-	out.FileName = filepath.Dir(files[0].Filename)
+	FileNameList := strings.Split("/", filepath.Dir(files[0].Filename))
+
+	out.FileName = FileNameList[len(FileNameList)-1]
 
 	c.Header("Content-Type", "application/octet-stream")
 	c.Header("Content-Disposition", "attachment; filename="+out.FileName+".xml")

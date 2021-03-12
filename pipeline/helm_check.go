@@ -5,6 +5,8 @@ import (
 	h "kcheckApi/helm"
 	p "kcheckApi/params"
 	"net/http"
+	"path/filepath"
+	"strings"
 )
 
 func HelmCheck(c *gin.Context) {
@@ -31,7 +33,9 @@ func HelmCheck(c *gin.Context) {
 	}
 	in.MultipartFile = files
 
-	out.FileName = files[0].Filename
+	FileNameList := strings.Split("/", filepath.Dir(files[0].Filename))
+
+	out.FileName = FileNameList[len(FileNameList)-1]
 
 	statusCode := http.StatusOK
 	// helm check
