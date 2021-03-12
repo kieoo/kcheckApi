@@ -15,17 +15,18 @@ type TestSuite struct {
 }
 
 type TestCase struct {
-	ClassN    string    `xml:"classname,attr"`
-	Name      string    `xml:"name,attr"`
-	Status    string    `xml:"status,attr"`
-	Time      float32   `xml:"time,attr"`
-	Failure   Failure   `xml:"failure"`
+	ClassN    string  `xml:"classname,attr"`
+	Name      string  `xml:"name,attr"`
+	Status    string  `xml:"status,attr"`
+	Time      float32 `xml:"time,attr"`
+	Failure   *Failure
 	SystemOut SystemOut `xml:"system-out"`
 }
 
 type Failure struct {
-	Message string `xml:"message,attr"`
-	Out     string `xml:""`
+	XMLName xml.Name `xml:"failure,omitempty"`
+	Message string   `xml:"message,attr"`
+	Out     string   `xml:",cdata"`
 }
 
 type SystemOut struct {

@@ -63,8 +63,8 @@ func TotalCheckXML(c *gin.Context) {
 
 	if err != nil {
 		HTestCase.Status = model.Fail
-		HTestCase.Failure.Message = "helm check fail"
-		HTestCase.Failure.Out = out.Message
+		HTestCase.Failure = &model.Failure{Message: "helm check fail", Out: out.Message}
+		HTestCase.SystemOut.Out = string(in.CheckBody.OriYaml)
 		c.Data(http.StatusOK, "text/xml", outXml(testSuite))
 		return
 	}
@@ -93,9 +93,8 @@ func TotalCheckXML(c *gin.Context) {
 			TestCase := &model.TestCase{}
 			TestCase.ClassN = out.FileName
 			TestCase.Name = fileName + " normal check"
-			TestCase.Failure.Message = "normal check failed"
-			TestCase.Failure.Out = out.Message
-			TestCase.SystemOut.Out = out.Message
+			TestCase.Failure = &model.Failure{Message: "normal check failed", Out: out.Message}
+			TestCase.SystemOut.Out = string(in.CheckBody.CheckYaml)
 			TestCase.Status = model.Fail
 			testSuite.TestCases = append(testSuite.TestCases, TestCase)
 			continue
@@ -106,10 +105,11 @@ func TotalCheckXML(c *gin.Context) {
 				TestCase := &model.TestCase{}
 				TestCase.ClassN = out.FileName
 				TestCase.Name = fileName + " normal check-" + string(hint.CheckName)
+				TestCase.Failure = &model.Failure{Message: "normal check-" + string(hint.CheckName),
+					Out: hint.Hints}
 				TestCase.Failure.Message = "normal check-" + string(hint.CheckName)
-				TestCase.Failure.Out = hint.Hints
-				TestCase.SystemOut.Out = hint.Hints
 				TestCase.Status = model.Fail
+				TestCase.SystemOut.Out = string(in.CheckBody.CheckYaml)
 				testSuite.TestCases = append(testSuite.TestCases, TestCase)
 			}
 			continue
@@ -149,7 +149,10 @@ func outXml(testSuite *model.TestSuite) []byte {
 
 	// struct to xml
 	oXml, err := xml.MarshalIndent(testSuite, "", "  ")
-	log.Printf("%s", err)
+
+	if err != nil {
+		log.Printf("%s", err)
+	}
 
 	oXml = append(oXmlHeader, oXml...)
 	return oXml
