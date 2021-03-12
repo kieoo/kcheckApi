@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"encoding/xml"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	h "kcheckApi/helm"
 	k "kcheckApi/kcheck"
@@ -64,6 +63,8 @@ func TotalCheckXML(c *gin.Context) {
 
 	if err != nil {
 		HTestCase.Status = model.Fail
+		HTestCase.Failure.Message = "helm check fail"
+		HTestCase.Failure.Out = out.Message
 		c.Data(http.StatusOK, "text/xml", outXml(testSuite))
 		return
 	}
@@ -92,6 +93,8 @@ func TotalCheckXML(c *gin.Context) {
 			TestCase := &model.TestCase{}
 			TestCase.ClassN = out.FileName
 			TestCase.Name = fileName + " normal check"
+			TestCase.Failure.Message = "normal check failed"
+			TestCase.Failure.Out = out.Message
 			TestCase.SystemOut.Out = out.Message
 			TestCase.Status = model.Fail
 			testSuite.TestCases = append(testSuite.TestCases, TestCase)
@@ -103,6 +106,8 @@ func TotalCheckXML(c *gin.Context) {
 				TestCase := &model.TestCase{}
 				TestCase.ClassN = out.FileName
 				TestCase.Name = fileName + " normal check-" + string(hint.CheckName)
+				TestCase.Failure.Message = "normal check-" + string(hint.CheckName)
+				TestCase.Failure.Out = hint.Hints
 				TestCase.SystemOut.Out = hint.Hints
 				TestCase.Status = model.Fail
 				testSuite.TestCases = append(testSuite.TestCases, TestCase)
@@ -140,9 +145,12 @@ func outXml(testSuite *model.TestSuite) []byte {
 	str := t.Format("2006-01-02T15:04:05")
 	testSuite.Timestamp = str
 
+	oXmlHeader := []byte(xml.Header)
+
 	// struct to xml
 	oXml, err := xml.MarshalIndent(testSuite, "", "  ")
-	log.Printf(fmt.Sprintf("%s", err))
+	log.Printf("%s", err)
 
+	oXml = append(oXmlHeader, oXml...)
 	return oXml
 }

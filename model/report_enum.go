@@ -2,7 +2,7 @@ package model
 
 const (
 	PASS string = "passed"
-	Fail string = "failure"
+	Fail string = "failed"
 )
 
 const (

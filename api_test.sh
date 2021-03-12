@@ -9,6 +9,6 @@ do
   do
     postF="$postF -F \"files=@$f;fileName=$f\""
   done
-curl_cmd="curl $url$postF"
+curl_cmd="curl -s $url$postF"
 eval "$curl_cmd 2>&1" | tee report_$chart.xml
 done

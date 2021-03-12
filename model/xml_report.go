@@ -1,9 +1,12 @@
 package model
 
+import "encoding/xml"
+
 type TestSuite struct {
-	Name      string      `xml:"name,attr"`
+	XMLName   xml.Name    `xml:"testsuite"`
 	TErrors   int32       `xml:"errors,attr"`
 	Failures  int32       `xml:"failures,attr"`
+	Name      string      `xml:"name,attr"`
 	Skip      int32       `xml:"skipped,attr"`
 	Tests     int32       `xml:"tests,attr"`
 	Time      float32     `xml:"time,attr"`
@@ -16,7 +19,13 @@ type TestCase struct {
 	Name      string    `xml:"name,attr"`
 	Status    string    `xml:"status,attr"`
 	Time      float32   `xml:"time,attr"`
+	Failure   Failure   `xml:"failure"`
 	SystemOut SystemOut `xml:"system-out"`
+}
+
+type Failure struct {
+	Message string `xml:"message,attr"`
+	Out     string `xml:""`
 }
 
 type SystemOut struct {
