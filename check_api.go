@@ -45,7 +45,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"msg": "abc\ndfg"})
 	})
 
-	r.Run(":7001")
+	r.Run(GetRunPort())
 }
 
 func CorsMiddleware() gin.HandlerFunc {
@@ -75,4 +75,12 @@ func CorsMiddleware() gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func GetRunPort() string {
+	port := os.Getenv("GOPORT")
+	if port == "" {
+		port = "8080"
+	}
+	return fmt.Sprintf(":%s", port)
 }
