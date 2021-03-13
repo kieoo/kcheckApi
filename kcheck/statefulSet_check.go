@@ -205,7 +205,7 @@ func (c *SWithEmptyDirSizeLimit) Check(data []byte) (p.HintsMap, error) {
 	stateful := &v1.StatefulSet{}
 	err := yaml.Unmarshal(data, stateful)
 
-	resultMap := p.HintsMap{"", "DWithEmptyDirSizeLimit"}
+	resultMap := p.HintsMap{"", "WithEmptyDirSizeLimit"}
 	if err != nil {
 		return resultMap, err
 	}

@@ -261,7 +261,7 @@ func (c *DWithEmptyDirSizeLimit) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
 
-	resultMap := p.HintsMap{"", "DWithEmptyDirSizeLimit"}
+	resultMap := p.HintsMap{"", "WithEmptyDirSizeLimit"}
 	if err != nil {
 		return resultMap, err
 	}
