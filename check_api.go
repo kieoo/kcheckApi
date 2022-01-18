@@ -80,7 +80,7 @@ func CorsMiddleware() gin.HandlerFunc {
 func GetRunPort() string {
 	port := os.Getenv("GOPORT")
 	if port == "" {
-		port = "8080"
+		port = "7001"
 	}
 	return fmt.Sprintf(":%s", port)
 }
