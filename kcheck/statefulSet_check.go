@@ -21,6 +21,7 @@ func (c *SWithGracefulTermination) Check(data []byte) (p.HintsMap, error) {
 	}
 	hintsTitle := "'preStop' should be set for a graceful termination containers: \n"
 	hints := ""
+	hintsCount := 0
 	hintsContent :=
 		`
 spec:
@@ -38,13 +39,13 @@ spec:
 		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
 			if stateful.Spec.Template.Spec.Containers[i].Lifecycle == nil ||
 				stateful.Spec.Template.Spec.Containers[i].Lifecycle.PreStop == nil {
-
+				hintsCount += 1
 				hints = hints + " - " + stateful.Spec.Template.Spec.Containers[i].Name + ". \n"
 
 			}
 		}
 	}
-	if hints == "" {
+	if hints == "" || hintsCount < len(stateful.Spec.Template.Spec.Containers) {
 		return resultMap, nil
 	}
 
@@ -70,6 +71,7 @@ func (c *SWithLivenessCheck) Check(data []byte) (p.HintsMap, error) {
 
 	hintsTitle := "'LivenessProbe' should be set for container: \n"
 	hints := ""
+	hintsCount := 0
 	hintsContent :=
 		`
 spec:
@@ -88,14 +90,14 @@ spec:
 		len(stateful.Spec.Template.Spec.Containers) > 0 {
 		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
 			if stateful.Spec.Template.Spec.Containers[i].LivenessProbe == nil {
-
+				hintsCount += 1
 				hints = hints + " - " + stateful.Spec.Template.Spec.Containers[i].Name + ".\n"
 
 			}
 
 		}
 	}
-	if hints == "" {
+	if hints == "" || hintsCount < len(stateful.Spec.Template.Spec.Containers) {
 		return resultMap, nil
 	}
 
@@ -121,6 +123,7 @@ func (c *SWithReadiness) Check(data []byte) (p.HintsMap, error) {
 
 	hintsTitle := "It is nice to have 'ReadinessProbe' setting for container:  \n"
 	hints := ""
+	hintsCount := 0
 	hintsContent :=
 		`
 spec:
@@ -135,9 +138,66 @@ spec:
 		len(stateful.Spec.Template.Spec.Containers) > 0 {
 		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
 			if stateful.Spec.Template.Spec.Containers[i].ReadinessProbe == nil {
-
+				hintsCount += 1
 				hints = hints + " - " +
-					stateful.Spec.Template.Spec.Containers[i].Name + "."
+					stateful.Spec.Template.Spec.Containers[i].Name + ".\n"
+			}
+		}
+	}
+	if hints == "" || hintsCount < len(stateful.Spec.Template.Spec.Containers) {
+		return resultMap, nil
+	}
+
+	hintsAll := hintsTitle + hints + hintsContent
+
+	resultMap.Hints = hintsAll
+	return resultMap, nil
+}
+
+type SWithLivenessReadinessDelayCheck struct {
+}
+
+func (c *SWithLivenessReadinessDelayCheck) Check(data []byte) (p.HintsMap, error) {
+	stateful := &v1.StatefulSet{}
+	err := yaml.Unmarshal(data, stateful)
+	resultMap := p.HintsMap{"", "WithLivenessReadnessDelayCheck"}
+	if err != nil {
+		return resultMap, err
+	}
+	if stateful.Kind != "StatefulSet" {
+		return resultMap, nil
+	}
+
+	hintsTitle := "Liveness.initialDelaySeconds should bigger then Readiness.initialDelaySeconds  \n"
+	hints := ""
+	hintsContent :=
+		`
+spec:
+  containers:
+    readinessProbe:
+      tcpSocket:
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 10 
+    livenessProbe:
+      exec:
+        command:
+        - cat
+        - /tmp/healthy
+      initialDelaySeconds: 10
+      periodSeconds: 5` + "\n"
+
+	if stateful.Spec.Template.Spec.Containers != nil &&
+		len(stateful.Spec.Template.Spec.Containers) > 0 {
+		for i := 0; i < len(stateful.Spec.Template.Spec.Containers); i++ {
+			if stateful.Spec.Template.Spec.Containers[i].ReadinessProbe == nil ||
+				stateful.Spec.Template.Spec.Containers[i].LivenessProbe == nil {
+				continue
+			}
+			if stateful.Spec.Template.Spec.Containers[i].ReadinessProbe.InitialDelaySeconds >=
+				stateful.Spec.Template.Spec.Containers[i].LivenessProbe.InitialDelaySeconds {
+				hints = hints + " - " +
+					stateful.Spec.Template.Spec.Containers[i].Name + ".\n"
 			}
 		}
 	}
@@ -172,11 +232,13 @@ func (c *SWithResourceRequestAndLimit) Check(data []byte) (p.HintsMap, error) {
 		`
 spec:
   containers:
-    readinessProbe:
-      tcpSocket:
-        port: 8080
-      initialDelaySeconds: 5
-      periodSeconds: 10 ` + "\n"
+	resources:
+	  limits:
+		cpu: 3
+		memory: 2Gi
+	  requests:
+		cpu: 2
+		memory: 1Gi ` + "\n"
 
 	if stateful.Spec.Template.Spec.Containers != nil &&
 		len(stateful.Spec.Template.Spec.Containers) > 0 {

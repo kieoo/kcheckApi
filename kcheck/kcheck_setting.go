@@ -14,6 +14,7 @@ func init() {
 	Checkers["DWithReadiness"] = &DWithReadiness{}
 	Checkers["WithRollingUpdate"] = &WithRollingUpdate{}
 	Checkers["DWithEmptyDirSizeLimit"] = &DWithEmptyDirSizeLimit{}
+	Checkers["DWithLivenessReadinessDelayCheck"] = &DWithLivenessReadinessDelayCheck{}
 
 	// Stateful Checker
 	Checkers["SWithGracefulTermination"] = &SWithGracefulTermination{}
@@ -21,6 +22,7 @@ func init() {
 	Checkers["SWithResourceRequestAndLimit"] = &SWithResourceRequestAndLimit{}
 	Checkers["SWithReadiness"] = &SWithReadiness{}
 	Checkers["SWithEmptyDirSizeLimit"] = &SWithEmptyDirSizeLimit{}
+	Checkers["SWithLivenessReadinessDelayCheck"] = &SWithLivenessReadinessDelayCheck{}
 
 }
 

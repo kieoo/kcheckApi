@@ -17,4 +17,5 @@ rules:
   - SWithLiveness
   - SWithResourceRequestAndLimit
   - SWithReadiness
+  - SWithLivenessReadinessDelayCheck
   - SWithEmptyDirSizeLimit

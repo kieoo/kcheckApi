@@ -10,10 +10,13 @@ import (
 func CleanOriYaml(ori []byte) map[string][]byte {
 	// 只保留deployment, statefulset的配置, 并切片
 	SIndex := bytes.Index(ori, []byte("# Source"))
+	var deploy []byte
 	if SIndex == -1 {
-		return nil
+		deploy = []byte("# Source: ")
+		deploy = append(deploy, ori...)
+	} else {
+		deploy = ori[SIndex:]
 	}
-	deploy := ori[SIndex:]
 
 	out := make(map[string][]byte)
 

@@ -22,6 +22,7 @@ func (c *DWithGracefulTermination) Check(data []byte) (p.HintsMap, error) {
 	}
 	hintsTitle := "'preStop' should be set for a graceful termination containers: \n"
 	hints := ""
+	hintsCount := 0
 	hintsContent :=
 		`
 spec:
@@ -38,13 +39,13 @@ spec:
 		for i := 0; i < len(deploy.Spec.Template.Spec.Containers); i++ {
 			if deploy.Spec.Template.Spec.Containers[i].Lifecycle == nil ||
 				deploy.Spec.Template.Spec.Containers[i].Lifecycle.PreStop == nil {
-
+				hintsCount += 1
 				hints = hints + " - " + deploy.Spec.Template.Spec.Containers[i].Name + ". \n"
 			}
 
 		}
 	}
-	if hints == "" {
+	if hints == "" || hintsCount < len(deploy.Spec.Template.Spec.Containers) {
 		return resultMap, nil
 	}
 	hintsAll := hintsTitle + hints + hintsContent
@@ -69,6 +70,7 @@ func (c *DWithLivenessCheck) Check(data []byte) (p.HintsMap, error) {
 
 	hintsTitle := "'LivenessProbe' should be set for container: \n"
 	hints := ""
+	hintsCount := 0
 	hintsContent :=
 		`
 spec:
@@ -87,14 +89,14 @@ spec:
 		len(deploy.Spec.Template.Spec.Containers) > 0 {
 		for i := 0; i < len(deploy.Spec.Template.Spec.Containers); i++ {
 			if deploy.Spec.Template.Spec.Containers[i].LivenessProbe == nil {
-
+				hintsCount += 1
 				hints = hints + " - " + deploy.Spec.Template.Spec.Containers[i].Name + ".\n"
 
 			}
 
 		}
 	}
-	if hints == "" {
+	if hints == "" || hintsCount < len(deploy.Spec.Template.Spec.Containers) {
 		return resultMap, nil
 	}
 	hintsAll := hintsTitle + hints + hintsContent
@@ -119,6 +121,7 @@ func (c *DWithReadiness) Check(data []byte) (p.HintsMap, error) {
 
 	hintsTitle := "It is nice to have 'ReadinessProbe' setting for container:  \n"
 	hints := ""
+	hintsCount := 0
 	hintsContent :=
 		`
 spec:
@@ -133,11 +136,68 @@ spec:
 		len(deploy.Spec.Template.Spec.Containers) > 0 {
 		for i := 0; i < len(deploy.Spec.Template.Spec.Containers); i++ {
 			if deploy.Spec.Template.Spec.Containers[i].ReadinessProbe == nil {
-
+				hintsCount += 1
 				hints = hints + " - " + deploy.Spec.Template.Spec.Containers[i].Name + ".\n"
 
 			}
 
+		}
+	}
+	if hints == "" || hintsCount < len(deploy.Spec.Template.Spec.Containers) {
+		return resultMap, nil
+	}
+
+	hintsAll := hintsTitle + hints + hintsContent
+
+	resultMap.Hints = hintsAll
+	return resultMap, nil
+}
+
+type DWithLivenessReadinessDelayCheck struct {
+}
+
+func (c *DWithLivenessReadinessDelayCheck) Check(data []byte) (p.HintsMap, error) {
+	deploy := &v1.Deployment{}
+	err := yaml.Unmarshal(data, deploy)
+	resultMap := p.HintsMap{"", "WithLivenessReadnessDelayCheck"}
+	if err != nil {
+		return resultMap, err
+	}
+	if deploy.Kind != "Deployment" {
+		return resultMap, nil
+	}
+
+	hintsTitle := "Liveness.initialDelaySeconds should bigger then Readiness.initialDelaySeconds  \n"
+	hints := ""
+	hintsContent :=
+		`
+spec:
+  containers:
+    readinessProbe:
+      tcpSocket:
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 10 
+    livenessProbe:
+      exec:
+        command:
+        - cat
+        - /tmp/healthy
+      initialDelaySeconds: 10
+      periodSeconds: 5` + "\n"
+
+	if deploy.Spec.Template.Spec.Containers != nil &&
+		len(deploy.Spec.Template.Spec.Containers) > 0 {
+		for i := 0; i < len(deploy.Spec.Template.Spec.Containers); i++ {
+			if deploy.Spec.Template.Spec.Containers[i].ReadinessProbe == nil ||
+				deploy.Spec.Template.Spec.Containers[i].LivenessProbe == nil {
+				continue
+			}
+			if deploy.Spec.Template.Spec.Containers[i].ReadinessProbe.InitialDelaySeconds >=
+				deploy.Spec.Template.Spec.Containers[i].LivenessProbe.InitialDelaySeconds {
+				hints = hints + " - " +
+					deploy.Spec.Template.Spec.Containers[i].Name + ".\n"
+			}
 		}
 	}
 	if hints == "" {
@@ -171,11 +231,13 @@ func (c *DWithResourceRequestAndLimit) Check(data []byte) (p.HintsMap, error) {
 		`
 spec:
   containers:
-    readinessProbe:
-      tcpSocket:
-        port: 8080
-      initialDelaySeconds: 5
-      periodSeconds: 10 ` + "\n"
+	resources:
+	  limits:
+		cpu: 3
+		memory: 2Gi
+	  requests:
+		cpu: 2
+		memory: 1Gi ` + "\n"
 
 	if deploy.Spec.Template.Spec.Containers != nil &&
 		len(deploy.Spec.Template.Spec.Containers) > 0 {
