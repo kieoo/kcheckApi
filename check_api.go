@@ -35,15 +35,16 @@ func main() {
 		}
 	})
 
-	r.POST("/kcheck", pipeline.KCheck)
+	kc := r.Group("kc")
+	{
+		kc.POST("/kcheck", pipeline.KCheck)
+		kc.POST("/upload", pipeline.HelmCheck)
+		kc.POST("/junit_xml", pipeline.TotalCheckXML)
+	}
 
-	r.POST("/upload", pipeline.HelmCheck)
-
-	r.POST("/total_check/Junit_xml", pipeline.TotalCheckXML)
-
-	r.POST("/return2", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"msg": "abc\ndfg"})
-	})
+	//r.POST("/return2", func(c *gin.Context) {
+	//	c.JSON(http.StatusOK, gin.H{"msg": "abc\ndfg"})
+	//})
 
 	r.Run(GetRunPort())
 }

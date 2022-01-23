@@ -10,4 +10,5 @@ type CResponse struct {
 type HintsMap struct {
 	Hints     string `json:"hints"`
 	CheckName string `json:"check_name"`
+	Level     int32  `json:"level"`
 }

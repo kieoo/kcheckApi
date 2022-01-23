@@ -4,6 +4,7 @@ package kcheck
 import (
 	yaml "github.com/ghodss/yaml"
 	v1 "k8s.io/api/apps/v1"
+	"kcheckApi/constant"
 	p "kcheckApi/params"
 )
 
@@ -13,14 +14,14 @@ type DWithGracefulTermination struct {
 func (c *DWithGracefulTermination) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
-	resultMap := p.HintsMap{"", "WithGracefulTermination"}
+	resultMap := p.HintsMap{CheckName: "WithGracefulTermination"}
 	if err != nil {
 		return resultMap, err
 	}
 	if deploy.Kind != "Deployment" {
 		return resultMap, nil
 	}
-	hintsTitle := "'preStop' should be set for a graceful termination containers: \n"
+	hintsTitle := "建议给containers设置'preStop'做退出准备: \n"
 	hints := ""
 	hintsCount := 0
 	hintsContent :=
@@ -51,6 +52,7 @@ spec:
 	hintsAll := hintsTitle + hints + hintsContent
 
 	resultMap.Hints = hintsAll
+	resultMap.Level = constant.WARNING
 	return resultMap, nil
 }
 
@@ -60,7 +62,7 @@ type DWithLivenessCheck struct {
 func (c *DWithLivenessCheck) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
-	resultMap := p.HintsMap{"", "WithHealthCheck"}
+	resultMap := p.HintsMap{CheckName: "WithHealthCheck"}
 	if err != nil {
 		return resultMap, err
 	}
@@ -68,7 +70,7 @@ func (c *DWithLivenessCheck) Check(data []byte) (p.HintsMap, error) {
 		return resultMap, nil
 	}
 
-	hintsTitle := "'LivenessProbe' should be set for container: \n"
+	hintsTitle := "应该给container设置'LivenessProbe': \n"
 	hints := ""
 	hintsCount := 0
 	hintsContent :=
@@ -102,6 +104,7 @@ spec:
 	hintsAll := hintsTitle + hints + hintsContent
 
 	resultMap.Hints = hintsAll
+	resultMap.Level = constant.ERROR
 	return resultMap, nil
 }
 
@@ -111,7 +114,7 @@ type DWithReadiness struct {
 func (c *DWithReadiness) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
-	resultMap := p.HintsMap{"", "WithReadiness"}
+	resultMap := p.HintsMap{CheckName: "WithReadiness"}
 	if err != nil {
 		return resultMap, err
 	}
@@ -119,7 +122,7 @@ func (c *DWithReadiness) Check(data []byte) (p.HintsMap, error) {
 		return resultMap, nil
 	}
 
-	hintsTitle := "It is nice to have 'ReadinessProbe' setting for container:  \n"
+	hintsTitle := "应该给container设置'ReadinessProbe':  \n"
 	hints := ""
 	hintsCount := 0
 	hintsContent :=
@@ -150,6 +153,7 @@ spec:
 	hintsAll := hintsTitle + hints + hintsContent
 
 	resultMap.Hints = hintsAll
+	resultMap.Level = constant.ERROR
 	return resultMap, nil
 }
 
@@ -159,7 +163,7 @@ type DWithLivenessReadinessDelayCheck struct {
 func (c *DWithLivenessReadinessDelayCheck) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
-	resultMap := p.HintsMap{"", "WithLivenessReadnessDelayCheck"}
+	resultMap := p.HintsMap{CheckName: "WithLivenessReadnessDelayCheck"}
 	if err != nil {
 		return resultMap, err
 	}
@@ -167,7 +171,7 @@ func (c *DWithLivenessReadinessDelayCheck) Check(data []byte) (p.HintsMap, error
 		return resultMap, nil
 	}
 
-	hintsTitle := "Liveness.initialDelaySeconds should bigger then Readiness.initialDelaySeconds  \n"
+	hintsTitle := "Liveness.initialDelaySeconds 应该大于 Readiness.initialDelaySeconds:  \n"
 	hints := ""
 	hintsContent :=
 		`
@@ -207,6 +211,7 @@ spec:
 	hintsAll := hintsTitle + hints + hintsContent
 
 	resultMap.Hints = hintsAll
+	resultMap.Level = constant.ERROR
 	return resultMap, nil
 }
 
@@ -217,7 +222,7 @@ func (c *DWithResourceRequestAndLimit) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
 
-	resultMap := p.HintsMap{"", "WithResourceRequestAndLimit"}
+	resultMap := p.HintsMap{CheckName: "WithResourceRequestAndLimit"}
 	if err != nil {
 		return resultMap, err
 	}
@@ -225,7 +230,7 @@ func (c *DWithResourceRequestAndLimit) Check(data []byte) (p.HintsMap, error) {
 		return resultMap, nil
 	}
 
-	hintsTitle := "'Resource requests & limits' should be set for container: \n"
+	hintsTitle := "应该给容器设置'Resource requests & limits': \n"
 	hints := ""
 	hintsContent :=
 		`
@@ -256,6 +261,7 @@ spec:
 	hintsAll := hintsTitle + hints + hintsContent
 
 	resultMap.Hints = hintsAll
+	resultMap.Level = constant.ERROR
 	return resultMap, nil
 }
 
@@ -265,7 +271,7 @@ func (c *WithRollingUpdate) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
 
-	resultMap := p.HintsMap{"", "WithRollingUpdate"}
+	resultMap := p.HintsMap{CheckName: "WithRollingUpdate"}
 	if err != nil {
 		return resultMap, err
 	}
@@ -280,7 +286,7 @@ func (c *WithRollingUpdate) Check(data []byte) (p.HintsMap, error) {
 		deploy.Spec.Strategy.RollingUpdate.MaxUnavailable != nil &&
 		deploy.Spec.Strategy.RollingUpdate.MaxUnavailable.IntVal >= 50 {
 
-		hints = "'MaxSurge & MaxUnavailable' should be set and < 50 " +
+		hints = "'MaxSurge & MaxUnavailable' 应该小于 < 50 " +
 			`
 spec:
   strategy:
@@ -298,7 +304,7 @@ spec:
 			(deploy.Spec.Strategy.RollingUpdate.MaxUnavailable != nil &&
 				deploy.Spec.Strategy.RollingUpdate.MaxUnavailable.StrVal >= "50%")) {
 
-		hints = "'MaxSurge & MaxUnavailable' should be set and < 50 " +
+		hints = "'MaxSurge & MaxUnavailable' 应该小于 < 50 " +
 			`
 spec:
   strategy:
@@ -313,6 +319,7 @@ spec:
 		return resultMap, nil
 	}
 	resultMap.Hints = hints
+	resultMap.Level = constant.ERROR
 	return resultMap, nil
 }
 
@@ -323,7 +330,7 @@ func (c *DWithEmptyDirSizeLimit) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
 
-	resultMap := p.HintsMap{"", "WithEmptyDirSizeLimit"}
+	resultMap := p.HintsMap{CheckName: "WithEmptyDirSizeLimit"}
 	if err != nil {
 		return resultMap, err
 	}
@@ -331,7 +338,7 @@ func (c *DWithEmptyDirSizeLimit) Check(data []byte) (p.HintsMap, error) {
 		return resultMap, nil
 	}
 
-	hintsTitle := "'Volumes emptyDir limits' should be set for emptyDir: \n"
+	hintsTitle := "如果需要emptyDir Volumes, 应该设置'Volumes emptyDir limits': \n"
 	hints := ""
 	hintsContent :=
 		`
@@ -356,5 +363,42 @@ emptyDir:
 	hintsAll := hintsTitle + hints + hintsContent
 
 	resultMap.Hints = hintsAll
+	resultMap.Level = constant.ERROR
+	return resultMap, nil
+}
+
+type DWithTerminationGrace struct{}
+
+func (c *DWithTerminationGrace) Check(data []byte) (p.HintsMap, error) {
+	deploy := &v1.Deployment{}
+	err := yaml.Unmarshal(data, deploy)
+
+	resultMap := p.HintsMap{CheckName: "WithTerminationGrace"}
+	if err != nil {
+		return resultMap, err
+	}
+	if deploy.Kind != "StatefulSet" {
+		return resultMap, nil
+	}
+
+	hintsTitle := "建议设置'TerminationGracePeriodSeconds': \n"
+	hints := ""
+	hintsContent :=
+		`
+space:
+	terminationGracePeriodSeconds: 30
+	# 如果有使用nginx, 这个时间需要大于keep alive时间, 避免缩减pod时由于连接保持而出现502
+` + "\n"
+
+	if deploy.Spec.Template.Spec.TerminationGracePeriodSeconds == nil {
+		hints = hintsTitle + hintsContent
+	}
+
+	if hints == "" {
+		return resultMap, nil
+	}
+
+	resultMap.Hints = hints
+	resultMap.Level = constant.WARNING
 	return resultMap, nil
 }

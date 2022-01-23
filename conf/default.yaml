@@ -7,15 +7,19 @@ rules:
   - WithResourceRequestAndLimit
 - name: deployment
   checkItems:
+  - DWithGracefulTermination
   - DWithLiveness
   - DWithResourceRequestAndLimit
   - DWithReadiness
   - WithRollingUpdate
   - DWithEmptyDirSizeLimit
+  - DWithTerminationGrace
 - name: statefulSet
   checkItems:
+  - SWithGracefulTermination
   - SWithLiveness
   - SWithResourceRequestAndLimit
   - SWithReadiness
   - SWithLivenessReadinessDelayCheck
   - SWithEmptyDirSizeLimit
+  - SWithTerminationGrace
