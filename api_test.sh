@@ -1,6 +1,6 @@
 #!/bin/sh
 
-url="192.168.56.1:7001/total_check/Junit_xml"
+url="192.168.56.1:7001/kc/junit_xml"
 postF=""
 
 for chart in `ls -l |grep "^d" |awk '{print $9}'`;
