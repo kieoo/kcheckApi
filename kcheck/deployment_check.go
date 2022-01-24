@@ -377,7 +377,7 @@ func (c *DWithTerminationGrace) Check(data []byte) (p.HintsMap, error) {
 	if err != nil {
 		return resultMap, err
 	}
-	if deploy.Kind != "StatefulSet" {
+	if deploy.Kind != "Deployment" {
 		return resultMap, nil
 	}
 
