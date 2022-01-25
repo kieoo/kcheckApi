@@ -164,7 +164,7 @@ type SWithLivenessReadinessDelayCheck struct {
 func (c *SWithLivenessReadinessDelayCheck) Check(data []byte) (p.HintsMap, error) {
 	stateful := &v1.StatefulSet{}
 	err := yaml.Unmarshal(data, stateful)
-	resultMap := p.HintsMap{CheckName: "WithLivenessReadnessDelayCheck"}
+	resultMap := p.HintsMap{CheckName: "WithLivenessReadinessDelayCheck"}
 	if err != nil {
 		return resultMap, err
 	}

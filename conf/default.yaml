@@ -12,6 +12,7 @@ rules:
   - DWithResourceRequestAndLimit
   - DWithReadiness
   - WithRollingUpdate
+  - DWithLivenessReadinessDelayCheck
   - DWithEmptyDirSizeLimit
   - DWithTerminationGrace
 - name: statefulSet

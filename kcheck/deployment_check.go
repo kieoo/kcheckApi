@@ -163,7 +163,7 @@ type DWithLivenessReadinessDelayCheck struct {
 func (c *DWithLivenessReadinessDelayCheck) Check(data []byte) (p.HintsMap, error) {
 	deploy := &v1.Deployment{}
 	err := yaml.Unmarshal(data, deploy)
-	resultMap := p.HintsMap{CheckName: "WithLivenessReadnessDelayCheck"}
+	resultMap := p.HintsMap{CheckName: "WithLivenessReadinessDelayCheck"}
 	if err != nil {
 		return resultMap, err
 	}
